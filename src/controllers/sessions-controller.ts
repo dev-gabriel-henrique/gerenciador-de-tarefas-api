@@ -7,6 +7,11 @@ import { prisma } from "@/database/prisma";
 import { AppError } from "@/utils/AppError";
 import { authConfig } from "@/configs/auth";
 
+enum UserRole {
+  Admin = "admin",
+  Member = "member",
+}
+
 class SessionsController {
   async create(request: Request, response: Response) {
     const bodySchema = z.object({
@@ -32,7 +37,10 @@ class SessionsController {
 
     const { secret, expires_in } = authConfig.jwt
 
-    const token = sign({ role: user.role ?? "customer" }, secret, {
+    const roleSchema = z.nativeEnum(UserRole);
+    const userRole = roleSchema.parse(user.role ?? UserRole.Member);
+
+    const token = sign({ role: userRole }, secret, {
       subject: String(user.id),
       expiresIn: expires_in,
     });
